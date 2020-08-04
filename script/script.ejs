@@ -1,0 +1,328 @@
+<script>
+    var c_i = 0; // For checking new messages of all contacts
+    var f_i_type1;
+    var f_i_type2;
+    var f_i_type3;
+    var f_i_type4;
+    var contacts_l = [];
+    var changingUser = 0;
+    var unread = [];
+    var receiver;
+    var extra_contact = '';
+    // var endpoint = 'https://funnchat.herokuapp.com';
+    var endpoint = 'https://api-chatappi.herokuapp.com'; // This will be changed to the api in which we host the app-backend
+    // var chatBox = document.getElementById('chats_i');
+    // chatBox.scrollIntoView(false);
+    const socket = io('https://api-chatappi.herokuapp.com'); // This will be changed to the api in which we host the app-backend
+    // Searching for user
+    socket.on('searchedUsers', (data)=>{
+        document.getElementById('options_i').innerHTML = '';
+        for(var i=0; i<data.length; i++){
+            if(!(contacts_l.includes(data[i].username)) && data[i].username!=username && extra_contact!=data[i].username){
+                document.getElementById('options_i').innerHTML += `<p style="color: black; padding-top: 5px;padding-bottom: 5px; width:80%; border-radius: 8px;margin: 0; border-bottom: solid 1px rgb(0, 0, 0);" onClick="setUser('${data[i].username}')" class="eachSearchUser"><strong>${data[i].username}</strong></p>`;
+            }
+        }
+    });
+    function setUser(user){
+        document.getElementById('user_s_i').value= '';
+        document.getElementById('options_i').innerHTML='';
+        document.getElementById('contacts_i').innerHTML += `<div class="contact" id=${user} onclick="changeReceiver('${user}')"><div id="uname_${user}">${user}</div><div class="unread_num" id="unread_count_${user}"></div></div><div id="seperator_${user}" style="height: 1px; background-color: #EAEFF5"></div>`;
+        document.getElementById(`unread_count_${user}`).style.display = 'none';
+        changeReceiver(user);
+        extra_contact = user;
+        console.log(receiver);
+    }
+    function searchUser(event){
+        if(event.keyCode!=13){
+            if(document.getElementById('user_s_i').value==''){
+                document.getElementById('options_i').innerHTML='';
+            }else{
+                socket.emit('searchForUser', document.getElementById('user_s_i').value);
+            }
+        }
+    }
+    // this is temporary
+    function generateRandomString(length) {
+        var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        var random_string = '';
+        if (length > 0) {
+            for (var i = 0; i < length; i++) {
+                random_string += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+        }
+        return random_string;
+    }
+    username = prompt("What is your username ?");
+    if(username == undefined || username == ''){
+        location.reload();
+    }
+    socket.on('getUserid', ()=>{
+        socket.emit('noteUserid', username);
+    })
+    socket.on('showOnline', (data)=>{
+        console.log(data);
+    });
+    function populateMsg(data){
+        // THis is for the receiver side
+        if(data.sender!=username){
+            if(data.sender!=receiver){
+                console.log(`${data.sender}---${receiver}`);
+                if(contacts_l.includes(data.sender)){
+                    document.getElementById(`unread_count_${data.sender}`).style.display = '';
+                    document.getElementById(`unread_count_${data.sender}`).innerText = 1 + Number(document.getElementById(`unread_count_${data.sender}`).innerText);
+                }else{
+                    //Emit another event to update the contacts table
+                    socket.emit('addNewContact', {
+                        user1: data.sender,
+                        user2: data.receiver
+                    });
+                    if(extra_contact==data.sender){
+                        extra_contact = '';
+                    }
+                    if(document.getElementById(data.sender)==undefined){
+                        document.getElementById('contacts_i').innerHTML += `<div class="contact" id=${data.sender} onclick="changeReceiver('${data.sender}')"><div id="uname_${data.sender}">${data.sender}</div><div class="unread_num" id="unread_count_${data.sender}"></div></div><div style="height: 1px; background-color: #EAEFF5"></div>`;
+                        document.getElementById(`unread_count_${data.sender}`).style.display = 'none';
+                    }
+                    contacts_l.push(data.sender);
+                    document.getElementById(`unread_count_${data.sender}`).style.display = '';
+                    document.getElementById(`unread_count_${data.sender}`).innerText = 1 + Number(document.getElementById(`unread_count_${data.sender}`).innerText);
+                }
+                socket.emit('addToUnread', {
+                    user: data.sender,
+                    receiver: data.receiver
+                });
+            }else{
+                if(!(contacts_l.includes(data.receiver))){
+                    socket.emit('addNewContact', {
+                        user1: data.sender,
+                        user2: data.receiver
+                    });
+                    contacts_l.push(data.receiver);
+                    extra_contact='';
+                    console.log(`extra_contact - ${extra_contact}`);
+                }
+                console.log(data);
+                if(receiver==data.sender){
+                    if (data.sender == username) {
+                    document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="you chat">${data.txt}<div>`;
+                    } else {
+                        console.log(`chats_i_${data.msg_type}`);
+                        document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="other chat">${data.txt}<div>`;
+                    }
+                    document.getElementById(`chats_i_${data.msg_type}`).scrollTo(0, document.getElementById(`chats_i_${data.msg_type}`).scrollHeight);
+                }
+            }
+            //This is for the sender  side
+        }else{
+            if(!(contacts_l.includes(data.receiver))){
+                    contacts_l.push(data.receiver);
+                    extra_contact='';
+                    console.log(`extra_contact - ${extra_contact}`);
+                }
+            if(data.receiver==receiver){
+                if (data.sender == username) {
+                        document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="you chat">${data.txt}<div>`;
+                    } else {
+                        console.log(`chats_i_${data.msg_type}`);
+                        document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="other chat">${data.txt}<div>`;
+                    }
+                document.getElementById(`chats_i_${data.msg_type}`).scrollTo(0, document.getElementById(`chats_i_${data.msg_type}`).scrollHeight);
+            }
+        }
+    }
+    socket.on('populateMsg', (message)=>{
+        var data = JSON.parse(message);
+        populateMsg(data);
+        // console.log(JSON.parse(message));
+    })
+    // For initial loading of messages
+    function getData() {
+        socket.emit('initialChats', {
+            sender:username,
+            receiver:receiver,
+            items:1000
+        });
+    }
+    // // For lazy loading messages
+    // function loadData() {
+    //     return new Promise((resolve, reject) => {
+    //         HTTP = new XMLHttpRequest();
+    //         HTTP.onreadystatechange = function() {
+    //             if (HTTP.readyState == XMLHttpRequest.DONE) {
+    //                 resolve((JSON.parse(HTTP.responseText)));
+    //             }
+    //         }
+    //         HTTP.open("GET", endpoint + `/loadData?sender=${username}&receiver=${receiver}&items=20&index=${f_i}`, true);
+    //         HTTP.send();
+    //     });
+    // }
+    // var observer = new IntersectionObserver((entries, observer) => {
+    //     var entry = entries[entries.length - 1];
+    //     if (entry.isIntersecting) {
+    //         loadingPrev = 1;
+    //         observer.unobserve(document.getElementById('topmost'));
+    //         loadData().then((msgs) => {
+    //             if (msgs.length > 0) {
+    //                 f_i = msgs[0].id;
+    //                 for (var i = msgs.length - 1; i >= 0; i--) {
+    //                     document.getElementById('topmost').setAttribute("id", "prevtop");
+    //                     var newMsg = document.createElement("div");
+    //                     var node = document.createTextNode(msgs[i].txt);
+    //                     newMsg.appendChild(node);
+    //                     newMsg.setAttribute("id", "topmost");
+    //                     if (msgs[i].sender == username) {
+    //                         newMsg.setAttribute("class", "you chat");
+    //                     } else {
+    //                         newMsg.setAttribute("class", "other chat");
+    //                     }
+    //                     chatBox.insertBefore(newMsg, document.getElementById('prevtop'));
+    //                     document.getElementById('prevtop').removeAttribute("id");
+    //                 }
+    //                 observer.observe(document.getElementById('topmost'));
+    //                 loadingPrev = 0;
+    //             }
+    //         });
+
+    //     }
+
+    // });
+
+    function getContacts() {
+        return new Promise(async(resolve, reject) => {
+            var HTTP = new XMLHttpRequest();
+            HTTP.onreadystatechange = function() {
+                if (HTTP.readyState == XMLHttpRequest.DONE) {
+                    console.log(HTTP.responseText);
+                    resolve((JSON.parse(HTTP.responseText)));
+                }
+            }            
+            await HTTP.open("GET", endpoint + `/getContacts?user=${username}`, true);
+            await HTTP.send();
+        });
+    }
+    socket.on('checked-unread', (data)=>{
+        console.log(data);
+        if(data.length!=0){
+            console.log("ok");
+            document.getElementById(`unread_count_${data[0].username}`).innerText = data[0].number;
+            document.getElementById(`unread_count_${data[0].username}`).style.display = '';
+        }
+    });
+    // //Starting point of the app
+    getContacts().then(async(contacts) => {
+        for (var i = 0; i < contacts.length; i++) {
+            if (contacts[i].user1 == username) {
+                socket.emit('checkUnread', {
+                    user:contacts[i].user2,
+                    receiver:contacts[i].user1
+                });
+                document.getElementById('contacts_i').innerHTML += `<div class="contact" id=${contacts[i].user2} onclick="changeReceiver('${contacts[i].user2}')"><div id="uname_${contacts[i].user2}">${contacts[i].user2}</div><div class="unread_num" id="unread_count_${contacts[i].user2}"></div></div><div id="seperator_${contacts[i].user2}" style="height: 1px; background-color: #EAEFF5"></div>`;
+                document.getElementById(`unread_count_${contacts[i].user2}`).style.display = 'none';
+                contacts_l.push(contacts[i].user2);
+            } else {
+                socket.emit('checkUnread', {
+                    user:contacts[i].user1,
+                    receiver:contacts[i].user2
+                });
+                document.getElementById('contacts_i').innerHTML += `<div class="contact" id=${contacts[i].user1} onclick="changeReceiver('${contacts[i].user1}')"><div id="uname_${contacts[i].user1}">${contacts[i].user1}</div><div class="unread_num" id="unread_count_${contacts[i].user1}"></div></div><div id="seperator_${contacts[i].user1}" style="height: 1px; background-color: #EAEFF5"></div>`;
+                document.getElementById(`unread_count_${contacts[i].user1}`).style.display = 'none'
+                contacts_l.push(contacts[i].user1);
+            }
+        }
+    });
+
+    function changeReceiver(user) {
+        changingUser = 1;
+        if(document.getElementById(`unread_count_${user}`).innerText!=''){
+            socket.emit('deleteFromUnread', {
+                user: user,
+                receiver: username
+            });
+            document.getElementById(`unread_count_${user}`).innerText='';
+            document.getElementById(`unread_count_${user}`).style.display='none';
+        }
+        if(extra_contact!=''){
+            (document.getElementById(extra_contact)).remove();
+            (document.getElementById(`seperator_${extra_contact}`)).remove();
+            extra_contact='';
+            receiver = user;
+        }
+        if (receiver != undefined) {
+            document.getElementById(`uname_${receiver}`).innerText = document.getElementById(receiver).id;
+        }
+        receiver = user;
+        document.getElementById(`uname_${receiver}`).innerHTML = `<strong>${document.getElementById(receiver).innerText}  >></strong>`
+        getData();
+    }
+    socket.on('sendingInitialChats', msgs => {
+            f_i_type1=0; f_i_type2=0; f_i_type3=0; f_i_type4=0;
+            document.getElementById('chats_i_type1').innerHTML='';document.getElementById('chats_i_type2').innerHTML='';document.getElementById('chats_i_type3').innerHTML='';document.getElementById('chats_i_type4').innerHTML='';
+            for (var i = 0; i < msgs.length; i++) {
+                var msg_type = msgs[i].message_type;
+                if(msg_type=='type1'){f_i_type1=msgs[i].id; console.log(f_i_type1)};if(msg_type=='type2'){f_i_type2=msgs[i].id; console.log(f_i_type2)};if(msg_type=='type3'){f_i_type3=msgs[i].id; console.log(f_i_type3)};if(msg_type=='type4'){f_i_type4=msgs[i].id; console.log(f_i_type4)};
+                while(msg_type==msgs[i].message_type){
+                    if (msgs[i].sender == username) {
+                        if (i == 0) {
+                            document.getElementById(`chats_i_${msg_type}`).innerHTML += `<div class="you chat" id="topmost">${msgs[i].txt}</div>`;
+                        } else {
+                            document.getElementById(`chats_i_${msg_type}`).innerHTML += `<div class="you chat">${msgs[i].txt}</div>`;
+                        }
+                    } else {
+                        if (i == 0) {
+                            document.getElementById(`chats_i_${msg_type}`).innerHTML += `<div class="other chat" id="topmost">${msgs[i].txt}</div>`;
+                        } else {
+                            document.getElementById(`chats_i_${msg_type}`).innerHTML += `<div class="other chat">${msgs[i].txt}</div>`;
+                        }
+                    }
+                    document.getElementById(`chats_i_${msg_type}`).scrollTo(0, document.getElementById(`chats_i_${msg_type}`).scrollHeight);
+                    i++;
+                    if(i==msgs.length){
+                        i++;
+                        break;
+                    }       
+                }
+                i--;
+
+            }
+            if(document.getElementById('topmost')!=null){
+                // observer.observe(document.getElementById('topmost'));
+            }
+            changingUser = 0;
+        })
+    function logout() {
+        document.cookie = "authorization=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+        location.reload();
+    }
+    async function pushData(msg_type) {
+        if (receiver != undefined) {
+                if (document.getElementById(`msg_${msg_type}`).value != "") {
+                    if(!(contacts_l.includes(receiver))){
+                        contacts_l.push(receiver);
+                        extra_contact='';
+                        console.log(contacts_l);
+                    }
+                socket.emit('sendMessageClient_sender', {
+                    txt : document.getElementById(`msg_${msg_type}`).value,
+                    msg_type : msg_type,
+                    date : "Sometime",
+                    sender : username,
+                    receiver : receiver
+                });
+                socket.emit('sendMessageClient', JSON.stringify({
+                    txt : document.getElementById(`msg_${msg_type}`).value,
+                    msg_type : msg_type,
+                    date : "Sometime",
+                    sender : username,
+                    receiver : receiver
+                }));
+                document.getElementById(`msg_${msg_type}`).value = "";
+                document.getElementById(`chats_i_${msg_type}`).scrollTo(0, document.getElementById(`chats_i_${msg_type}`).scrollHeight);
+            }
+        }
+        document.getElementById(`msg_${msg_type}`).value = "";
+    }
+
+    socket.on('multipleLoginError', ()=>{
+        document.body.innerHTML = "Sorry You have logged in another tab";
+    });
+</script>

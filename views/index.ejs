@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <title>Some ChatApp</title>
+    <%- include('../css/style') %>
+</head>
+
+<body>
+    <!-- Nav -->
+    <!-- Image and text -->
+    <nav class="navbar navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">
+            <!-- <img src="/docs/4.5/assets/brand/bootstrap-solid.svg" width="30" height="30" class="d-inline-block align-top" alt="logo" loading="lazy"> -->Some ChatApp
+        </a>
+        <button class="btn btn-outline-success my-2 my-sm-0" style="color: white; background-color: rgb(3, 148, 23);" onclick="logout()">Logout <%= data.user %></button>
+    </nav>
+    <!-- Nav -->
+    <div class="mainBody">
+        <div class="contacts" id="contacts_i">
+            <div class="userSearch">
+                <input type="text" name="user_s" id="user_s_i" style="background-color: rgb(226, 226, 226); color: rgb(0, 0, 0); width: 80%; border-radius: 8px;" onkeyup="searchUser(event)" placeholder="Seach by username or email...">
+                <div class="options" id="options_i">
+
+                </div>
+            </div>
+        </div>
+        <div class="chating">
+            <div class="chats" id="chats_i_type1">
+
+            </div>
+            <div class="sending">
+                <input class="form-control mr-sm-2" type="search" placeholder="Type a message" aria-label="Search" id="msg_type1">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit" style="height: 38px;" onclick="pushData('type1')">></button>
+            </div>
+
+            <div class="chats" id="chats_i_type2">
+
+            </div>
+            <div class="sending">
+                <input class="form-control mr-sm-2" type="search" placeholder="Type a message" aria-label="Search" id="msg_type2">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit" style="height: 38px;" onclick="pushData('type2')">></button>
+            </div>
+
+            <div class="chats" id="chats_i_type3">
+
+            </div>
+            <div class="sending">
+                <input class="form-control mr-sm-2" type="search" placeholder="Type a message" aria-label="Search" id="msg_type3">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit" style="height: 38px;" onclick="pushData('type3')">></button>
+            </div>
+
+            <div class="chats" id="chats_i_type4">
+
+            </div>
+            <div class="sending">
+                <input class="form-control mr-sm-2" type="search" placeholder="Type a message" aria-label="Search" id="msg_type4">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit" style="height: 38px;" onclick="pushData('type4')">></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+    <script src="https://api-chatappi.herokuapp.com/socket.io/socket.io.js"></script> <!--This also is to be changed-->
+    <script>
+        var username = '<%= data.user %>'
+        console.log('<%= data.user %>');
+    </script>
+    <%- include("../script/script") %>
+</body>
+
+</html>
