@@ -134,18 +134,20 @@
                     //Emit another event to update the contacts table
                     socket.emit('addNewContact', {
                         user1: data.sender,
-                        user2: data.receiver
+                        user2: username
                     });
                     if(extra_contact==data.sender){
                         extra_contact = '';
                     }
-                    if(document.getElementById(data.sender)==undefined){
+                    if(document.getElementById(data.sender)==undefined && receiver!=-1){
                         document.getElementById('contacts_i').innerHTML += `<div class="contact" id=${data.sender} onclick="changeReceiver('${data.sender}')"><div id="uname_${data.sender}">${data.sender}</div><div class="unread_num" id="unread_count_${data.sender}"></div></div><div style="height: 1px; background-color: #EAEFF5"></div>`;
                         document.getElementById(`unread_count_${data.sender}`).style.display = 'none';
                     }
                     contacts_l.push(data.sender);
-                    document.getElementById(`unread_count_${data.sender}`).style.display = '';
+                    if(receiver!=-1){
+                        document.getElementById(`unread_count_${data.sender}`).style.display = '';
                     document.getElementById(`unread_count_${data.sender}`).innerText = 1 + Number(document.getElementById(`unread_count_${data.sender}`).innerText);
+                    }
                 }
                 if(data.receiver==-1){////////////
                     socket.emit('addToUnread', {
@@ -159,7 +161,7 @@
                     });
                 }
             }else{
-                if(!(contacts_l.includes(data.receiver))){
+                if(!(contacts_l.includes(data.receiver)) && extra_contact!=''){
                     socket.emit('addNewContact', {
                         user1: data.sender,
                         user2: data.receiver
@@ -395,7 +397,7 @@
     async function pushData(msg_type) {
         if (receiver != undefined) {
                 if (document.getElementById(`msg_${msg_type}`).value != "") {
-                    if(!(contacts_l.includes(receiver))){
+                    if(!(contacts_l.includes(receiver)) && receiver!=-1){
                         contacts_l.push(receiver);
                         extra_contact='';
                         console.log(contacts_l);
