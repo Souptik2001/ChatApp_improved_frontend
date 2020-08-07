@@ -112,6 +112,7 @@
         return random_string;
     }
     username = prompt("What is your username ?");
+    document.getElementById('logout_i').innerText = `Logout ${username}`;
     if(username == undefined || username == ''){
         location.reload();
     }
@@ -390,10 +391,10 @@
             }
             changingUser = 0;
         })
-    function logout() {
-        document.cookie = "authorization=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
-        location.reload();
-    }
+    // function logout() {
+    //     document.cookie = "authorization=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+    //     location.reload();
+    // }
     async function pushData(msg_type) {
         if (receiver != undefined) {
                 if (document.getElementById(`msg_${msg_type}`).value != "") {
