@@ -1,5 +1,5 @@
 <script>
-    var c_i = 0; // For checking new messages of all contacts
+    var messaging_type = 'direct';
     var f_i_type1;
     var f_i_type2;
     var f_i_type3;
@@ -9,11 +9,71 @@
     var unread = [];
     var receiver;
     var extra_contact = '';
-    // var endpoint = 'https://funnchat.herokuapp.com';
     var endpoint = 'https://api-chatappi.herokuapp.com'; // This will be changed to the api in which we host the app-backend
-    // var chatBox = document.getElementById('chats_i');
-    // chatBox.scrollIntoView(false);
     const socket = io('https://api-chatappi.herokuapp.com'); // This will be changed to the api in which we host the app-backend
+    document.getElementById('direct').remove();
+    // Deciding messaging type
+
+    function changeMsgType(messagingType){
+        for(var i=1; i<5; i++){
+            document.getElementById(`chats_i_type${i}`).innerHTML = '';
+        }
+        var cap = messaging_type[0].toUpperCase() +  messaging_type.slice(1); 
+        document.getElementById('sub-menu_i').innerHTML += `<li id="${cap}" onclick="changeMsgType('${cap}')">${cap}</li>`;
+        messaging_type = messagingType;
+        cap = messaging_type[0].toUpperCase() +  messaging_type.slice(1); 
+        document.getElementById(messaging_type).remove();
+        document.getElementById('type_heading').innerText = cap;
+        if(messagingType=='direct'){
+            receiver=undefined;
+            document.getElementById('contacts_i').innerHTML = '';
+            document.getElementById('contacts_i').innerHTML += `<div class="userSearch">
+                <input type="text" name="user_s" id="user_s_i" style="background-color: rgb(226, 226, 226); color: rgb(0, 0, 0); width: 80%; border-radius: 8px;" onkeyup="searchUser(event)" placeholder="Seach by username or email...">
+                <div class="options" id="options_i">
+
+                </div>
+            </div>`;
+            document.getElementById('contacts_i').innerHTML += `<div class="typeSelection">
+                <ul class="menu">
+                    <li><div id="type_heading">Direct</div>
+                        <ul class="sub-menu" id="sub-menu_i">
+                            <li id="broadcast" onclick="changeMsgType('broadcast')">BroadCast</li>
+                        <li id="multiple" onclick="changeMsgType('multiple')">Mutiple</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>`;
+            populateContacts();
+
+        }else if (messagingType=='broadcast') {
+            document.getElementById('intro_i').style.display = 'none';
+            document.getElementById('chating_i').style.display = 'flex';
+            extra_contact='';
+            receiver = -1;
+            document.getElementById('contacts_i').innerHTML = '';
+            document.getElementById('contacts_i').innerHTML = `<div class="typeSelection">
+                <ul class="menu">
+                    <li><div id="type_heading">BroadCast</div>
+                        <ul class="sub-menu" id="sub-menu_i">
+                        <li id="direct" onclick="changeMsgType('direct')">Direct</li>
+                        <li id="multiple" onclick="changeMsgType('multiple')">Mutiple</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>`;
+            socket.emit('getBroadcastMessages', username);
+        } else {
+            
+        }
+    }
+    socket.on('sendingBroadcastMessages', (data)=>{
+        console.log(data);
+        if(receiver==-1){
+            for(var i=0; i<data.length; i++){
+                document.getElementById(`chats_i_${data[i].message_type}`).innerHTML += `<div class="you chat">${data[i].txt}<div>`;
+            }
+        }
+    });
     // Searching for user
     socket.on('searchedUsers', (data)=>{
         document.getElementById('options_i').innerHTML = '';
@@ -30,7 +90,6 @@
         document.getElementById(`unread_count_${user}`).style.display = 'none';
         changeReceiver(user);
         extra_contact = user;
-        console.log(receiver);
     }
     function searchUser(event){
         if(event.keyCode!=13){
@@ -66,10 +125,11 @@
         // THis is for the receiver side
         if(data.sender!=username){
             if(data.sender!=receiver){
-                console.log(`${data.sender}---${receiver}`);
                 if(contacts_l.includes(data.sender)){
-                    document.getElementById(`unread_count_${data.sender}`).style.display = '';
-                    document.getElementById(`unread_count_${data.sender}`).innerText = 1 + Number(document.getElementById(`unread_count_${data.sender}`).innerText);
+                    if(receiver!=-1){
+                        document.getElementById(`unread_count_${data.sender}`).style.display = '';
+                        document.getElementById(`unread_count_${data.sender}`).innerText = 1 + Number(document.getElementById(`unread_count_${data.sender}`).innerText);
+                    }
                 }else{
                     //Emit another event to update the contacts table
                     socket.emit('addNewContact', {
@@ -87,10 +147,17 @@
                     document.getElementById(`unread_count_${data.sender}`).style.display = '';
                     document.getElementById(`unread_count_${data.sender}`).innerText = 1 + Number(document.getElementById(`unread_count_${data.sender}`).innerText);
                 }
-                socket.emit('addToUnread', {
-                    user: data.sender,
-                    receiver: data.receiver
-                });
+                if(data.receiver==-1){////////////
+                    socket.emit('addToUnread', {
+                        user: data.sender,
+                        receiver: username
+                    });
+                }else{
+                    socket.emit('addToUnread', {
+                        user: data.sender,
+                        receiver: data.receiver
+                    });
+                }
             }else{
                 if(!(contacts_l.includes(data.receiver))){
                     socket.emit('addNewContact', {
@@ -113,20 +180,24 @@
                 }
             }
             //This is for the sender  side
-        }else{
-            if(!(contacts_l.includes(data.receiver))){
+        }else{//////////////////
+            if(data.receiver==-1){
+                document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="you chat">${data.txt}<div>`;
+            }else{
+                if(!(contacts_l.includes(data.receiver))){
                     contacts_l.push(data.receiver);
                     extra_contact='';
                     console.log(`extra_contact - ${extra_contact}`);
                 }
-            if(data.receiver==receiver){
-                if (data.sender == username) {
-                        document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="you chat">${data.txt}<div>`;
-                    } else {
-                        console.log(`chats_i_${data.msg_type}`);
-                        document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="other chat">${data.txt}<div>`;
-                    }
-                document.getElementById(`chats_i_${data.msg_type}`).scrollTo(0, document.getElementById(`chats_i_${data.msg_type}`).scrollHeight);
+                if(data.receiver==receiver){
+                    if (data.sender == username) {
+                            document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="you chat">${data.txt}<div>`;
+                        } else {
+                            console.log(`chats_i_${data.msg_type}`);
+                            document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="other chat">${data.txt}<div>`;
+                        }
+                    document.getElementById(`chats_i_${data.msg_type}`).scrollTo(0, document.getElementById(`chats_i_${data.msg_type}`).scrollHeight);
+                }
             }
         }
     }
@@ -200,16 +271,28 @@
             await HTTP.send();
         });
     }
+    socket.on('checked-unread-cache', (data)=>{
+        if(document.getElementById(`unread_count_${data.sender}`).innerText==''){
+            document.getElementById(`unread_count_${data.sender}`).innerText = data.number;
+        }else{
+            document.getElementById(`unread_count_${data.sender}`).innerText = Number(document.getElementById(`unread_count_${data.sender}`).innerText) + Number(data.number);
+        }
+        document.getElementById(`unread_count_${data.sender}`).style.display = '';
+    });
     socket.on('checked-unread', (data)=>{
-        console.log(data);
         if(data.length!=0){
-            console.log("ok");
-            document.getElementById(`unread_count_${data[0].username}`).innerText = data[0].number;
+            if(document.getElementById(`unread_count_${data[0].username}`).innerText==''){
+                document.getElementById(`unread_count_${data[0].username}`).innerText = data[0].number;
+            }else{
+                document.getElementById(`unread_count_${data[0].username}`).innerText = Number(document.getElementById(`unread_count_${data[0].username}`).innerText) + Number(data[0].number);
+            }
             document.getElementById(`unread_count_${data[0].username}`).style.display = '';
         }
     });
     // //Starting point of the app
-    getContacts().then(async(contacts) => {
+    function populateContacts(){
+        contacts_l = [];
+        getContacts().then(async(contacts) => {
         for (var i = 0; i < contacts.length; i++) {
             if (contacts[i].user1 == username) {
                 socket.emit('checkUnread', {
@@ -219,6 +302,10 @@
                 document.getElementById('contacts_i').innerHTML += `<div class="contact" id=${contacts[i].user2} onclick="changeReceiver('${contacts[i].user2}')"><div id="uname_${contacts[i].user2}">${contacts[i].user2}</div><div class="unread_num" id="unread_count_${contacts[i].user2}"></div></div><div id="seperator_${contacts[i].user2}" style="height: 1px; background-color: #EAEFF5"></div>`;
                 document.getElementById(`unread_count_${contacts[i].user2}`).style.display = 'none';
                 contacts_l.push(contacts[i].user2);
+                socket.emit('checkUnreadCache', {
+                    user:contacts[i].user2,
+                    receiver:contacts[i].user1
+                });
             } else {
                 socket.emit('checkUnread', {
                     user:contacts[i].user1,
@@ -227,17 +314,29 @@
                 document.getElementById('contacts_i').innerHTML += `<div class="contact" id=${contacts[i].user1} onclick="changeReceiver('${contacts[i].user1}')"><div id="uname_${contacts[i].user1}">${contacts[i].user1}</div><div class="unread_num" id="unread_count_${contacts[i].user1}"></div></div><div id="seperator_${contacts[i].user1}" style="height: 1px; background-color: #EAEFF5"></div>`;
                 document.getElementById(`unread_count_${contacts[i].user1}`).style.display = 'none'
                 contacts_l.push(contacts[i].user1);
+                socket.emit('checkUnreadCache', {
+                    user:contacts[i].user1,
+                    receiver:contacts[i].user2
+                });
             }
         }
     });
+    }
+    populateContacts();
 
     function changeReceiver(user) {
+        document.getElementById('intro_i').style.display='none';
+        document.getElementById('chating_i').style.display = 'flex';
         changingUser = 1;
         if(document.getElementById(`unread_count_${user}`).innerText!=''){
             socket.emit('deleteFromUnread', {
                 user: user,
                 receiver: username
             });
+            socket.emit('deleteFromUnreadCache', {
+                user: user,
+                receiver: username
+            })
             document.getElementById(`unread_count_${user}`).innerText='';
             document.getElementById(`unread_count_${user}`).style.display='none';
         }
@@ -259,7 +358,7 @@
             document.getElementById('chats_i_type1').innerHTML='';document.getElementById('chats_i_type2').innerHTML='';document.getElementById('chats_i_type3').innerHTML='';document.getElementById('chats_i_type4').innerHTML='';
             for (var i = 0; i < msgs.length; i++) {
                 var msg_type = msgs[i].message_type;
-                if(msg_type=='type1'){f_i_type1=msgs[i].id; console.log(f_i_type1)};if(msg_type=='type2'){f_i_type2=msgs[i].id; console.log(f_i_type2)};if(msg_type=='type3'){f_i_type3=msgs[i].id; console.log(f_i_type3)};if(msg_type=='type4'){f_i_type4=msgs[i].id; console.log(f_i_type4)};
+                if(msg_type=='type1'){f_i_type1=msgs[i].id;};if(msg_type=='type2'){f_i_type2=msgs[i].id;};if(msg_type=='type3'){f_i_type3=msgs[i].id;};if(msg_type=='type4'){f_i_type4=msgs[i].id;};
                 while(msg_type==msgs[i].message_type){
                     if (msgs[i].sender == username) {
                         if (i == 0) {
@@ -301,23 +400,23 @@
                         extra_contact='';
                         console.log(contacts_l);
                     }
-                socket.emit('sendMessageClient_sender', {
-                    txt : document.getElementById(`msg_${msg_type}`).value,
-                    msg_type : msg_type,
-                    date : "Sometime",
-                    sender : username,
-                    receiver : receiver
-                });
-                socket.emit('sendMessageClient', JSON.stringify({
-                    txt : document.getElementById(`msg_${msg_type}`).value,
-                    msg_type : msg_type,
-                    date : "Sometime",
-                    sender : username,
-                    receiver : receiver
-                }));
-                document.getElementById(`msg_${msg_type}`).value = "";
-                document.getElementById(`chats_i_${msg_type}`).scrollTo(0, document.getElementById(`chats_i_${msg_type}`).scrollHeight);
-            }
+                    socket.emit('sendMessageClient_sender', {
+                        txt : document.getElementById(`msg_${msg_type}`).value,
+                        msg_type : msg_type,
+                        date : "Sometime",
+                        sender : username,
+                        receiver : receiver
+                    });
+                    socket.emit('sendMessageClient', JSON.stringify({
+                        txt : document.getElementById(`msg_${msg_type}`).value,
+                        msg_type : msg_type,
+                        date : "Sometime",
+                        sender : username,
+                        receiver : receiver
+                    }));
+                    document.getElementById(`msg_${msg_type}`).value = "";
+                    document.getElementById(`chats_i_${msg_type}`).scrollTo(0, document.getElementById(`chats_i_${msg_type}`).scrollHeight);
+                }
         }
         document.getElementById(`msg_${msg_type}`).value = "";
     }

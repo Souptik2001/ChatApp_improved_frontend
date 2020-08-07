@@ -1,153 +1,226 @@
 <style>
-     :root {
-        --bgColor: black;
-        --txtColor: white;
-        --borderColor: rgb(67, 255, 161);
-        --ybubbleColor: rgb(103, 255, 103);
-        --obubbleColor: white;
-        --ChatBg: rgb(88, 88, 88);
-    }
-    
-    * {
-        margin: 0;
-        padding: 0;
-    }
-    
-    .mainBody {
-        display: flex;
-        justify-content: space-between;
-        height: 92.3vh;
-    }
-    
-    .contacts {
-        color: var(--txtColor);
-        padding-top: 10px;
-        padding-right: 5px;
-        padding-left: 5px;
-        text-align: center;
-        border-right: 1px solid var(--borderColor);
-        width: 30vw;
-        background-color: var(--bgColor);
-        height: 92.3vh;
-        overflow-y: auto;
-    }
-    
-    .userSearch {
-        display: flex;
-        flex-direction: column;
-        height: 150px;
-        align-items: center;
-        padding-top: 10px;
-        padding-bottom: 20px;
-        border-bottom: solid 2px white;
-    }
-    
-    .options {
-        height: 120px;
-        width: 100%;
-        overflow: auto;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .contact {
-        padding-top: 10px;
-        padding-bottom: 10px;
-        transition-duration: 300ms;
-        display: flex;
-        justify-content: center;
-        cursor: grab;
-    }
-    
-    .contact:hover {
-        background-color: white;
-        color: black;
-    }
-    
-    .chating {
-        width: 70vw;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        background-color: var(--ChatBg);
-    }
-    
-    .chat {
-        padding: 10px;
-        border-radius: 10px;
-        max-width: 50vw;
-        margin-bottom: 5px;
-        word-wrap: break-word;
-        line-break: loose;
-    }
-    
-    .eachSearchUser {
-        background-color: rgb(226, 226, 226);
-        transition-duration: 0.5s;
-        cursor: pointer;
-    }
-    
-    .eachSearchUser:hover {
-        background-color: rgb(224, 193, 146);
-    }
-    
-    .chats {
-        display: flex;
-        flex-direction: column;
-        padding-left: 5vw;
-        padding-right: 5vw;
-        height: 83.3vh;
-        overflow-y: auto;
-    }
-    
-    .you {
-        align-self: flex-end;
-        background-color: var(--ybubbleColor);
-    }
-    
-    .other {
-        align-self: flex-start;
-        background-color: var(--obubbleColor);
-    }
-    
-    .sending {
-        padding-left: 5vw;
-        padding-right: 5vw;
-        display: flex;
-        justify-content: space-between;
-        background-color: rgb(236, 215, 188);
-        padding-top: 10px;
-        padding-bottom: 10px;
-        height: 9vh;
-    }
-    .unread_num {
-        margin-left: 5px;
-        padding: 2px;
-        padding-right: 4px;
-        background-color: red;
-        border-radius: 100px;
-    }
+    :root {
+       --bgColor: black;
+       --txtColor: white;
+       --borderColor: rgb(67, 255, 161);
+       --ybubbleColor: rgb(103, 255, 103);
+       --obubbleColor: white;
+       --ChatBg: rgb(88, 88, 88);
+   }
+   
+   * {
+       margin: 0;
+       padding: 0;
+   }
+   
+   .mainBody {
+       display: flex;
+       justify-content: space-between;
+       height: 92.3vh;
+   }
+   
+   .contacts {
+       color: var(--txtColor);
+       padding-top: 10px;
+       padding-right: 5px;
+       padding-left: 5px;
+       text-align: center;
+       border-right: 1px solid var(--borderColor);
+       width: 30vw;
+       background-color: var(--bgColor);
+       height: 92.3vh;
+       overflow-y: auto;
+   }
+   
+   .userSearch {
+       display: flex;
+       flex-direction: column;
+       height: 150px;
+       align-items: center;
+       padding-top: 10px;
+       padding-bottom: 20px;
+       border-bottom: solid 2px white;
+   }
+   
+   .options {
+       height: 120px;
+       width: 100%;
+       overflow: auto;
+       margin: 0;
+       display: flex;
+       flex-direction: column;
+       align-items: center;
+   }
+   
+   .contact {
+       padding-top: 10px;
+       padding-bottom: 10px;
+       transition-duration: 300ms;
+       display: flex;
+       justify-content: center;
+       cursor: grab;
+   }
+   
+   .contact:hover {
+       background-color: white;
+       color: black;
+   }
 
-    /* width */
-    
-     ::-webkit-scrollbar {
-        width: 5px;
-    }
-    /* Track */
-    
-     ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-    /* Handle */
-    
-     ::-webkit-scrollbar-thumb {
-        background: #888;
-    }
-    /* Handle on hover */
-    
-     ::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
+   .intro {
+       width: 70vw;
+       text-align: center;
+       display: flex;
+       flex-direction: column;
+       justify-content: space-between;
+       background-color: var(--ChatBg);
+   }
+   
+   .chating {
+       width: 70vw;
+       display: none;
+       flex-direction: column;
+       justify-content: space-between;
+       background-color: var(--ChatBg);
+   }
+   
+   .chat {
+       padding: 10px;
+       border-radius: 10px;
+       max-width: 50vw;
+       margin-bottom: 5px;
+       word-wrap: break-word;
+       line-break: loose;
+   }
+   
+   .eachSearchUser {
+       background-color: rgb(226, 226, 226);
+       transition-duration: 0.5s;
+       cursor: pointer;
+   }
+   
+   .eachSearchUser:hover {
+       background-color: rgb(224, 193, 146);
+   }
+   
+   .chats {
+       display: flex;
+       flex-direction: column;
+       padding-left: 5vw;
+       padding-right: 5vw;
+       height: 83.3vh;
+       overflow-y: auto;
+   }
+   
+   .you {
+       align-self: flex-end;
+       background-color: var(--ybubbleColor);
+   }
+   
+   .other {
+       align-self: flex-start;
+       background-color: var(--obubbleColor);
+   }
+   
+   .sending {
+       padding-left: 5vw;
+       padding-right: 5vw;
+       display: flex;
+       justify-content: space-between;
+       background-color: rgb(236, 215, 188);
+       padding-top: 10px;
+       padding-bottom: 10px;
+       height: 9vh;
+   }
+   .unread_num {
+       margin-left: 5px;
+       padding: 2px;
+       padding-right: 4px;
+       background-color: red;
+       border-radius: 100px;
+   }
+
+   .typeSelection {
+       margin-top: 15px;
+       border-bottom: solid 2px white;
+   }
+
+
+   .menu {
+       display: inline-block;
+   }
+
+   .menu > li {
+       float: left;
+       color: peachpuff;
+       width: 140px;
+       height: 40px;
+       line-height: 40px;
+       background: rgba(0, 0, 0, 0.8);
+       cursor: pointer;
+       font-size: 17px;
+   }
+
+   .sub-menu {
+       transform: scale(0);
+       transform-origin: top center;
+       transition: all 300ms ease-in-out;
+   }
+
+
+   .sub-menu li {
+       font-size: 14px;
+       background: rgba(255, 255, 255, 0.842);
+       padding: 8px 0;
+       color: rgb(0, 0, 0);
+       border-bottom: 1px solid rgba(255,255,255, 0.2);
+       /*display: none;*/
+       transform: scale(0);
+       transform-origin: top center;
+       transition: all 300ms ease-in-out;
+   }
+
+   .sub-menu li:last-child {
+       border-bottom: 0;
+   }
+
+   .sub-menu li:hover {
+       background: rgb(255, 255, 255);
+   }
+
+
+   .menu > li:hover .sub-menu li{
+       /*display: block;*/
+       transform: scale(1);
+   }
+
+
+   .menu > li:hover .sub-menu {
+       transform: scale(1);
+   }
+
+   ul {
+       list-style-type:none;
+   }
+
+
+   /* width */
+   
+    ::-webkit-scrollbar {
+       width: 5px;
+   }
+   /* Track */
+   
+    ::-webkit-scrollbar-track {
+       background: #f1f1f1;
+   }
+   /* Handle */
+   
+    ::-webkit-scrollbar-thumb {
+       background: #888;
+   }
+   /* Handle on hover */
+   
+    ::-webkit-scrollbar-thumb:hover {
+       background: #555;
+   }
 </style>

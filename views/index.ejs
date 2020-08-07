@@ -13,6 +13,7 @@
 </head>
 
 <body>
+    <noscript>No Javascript Detected 😕</noscript>
     <!-- Nav -->
     <!-- Image and text -->
     <nav class="navbar navbar-dark bg-dark">
@@ -30,8 +31,22 @@
 
                 </div>
             </div>
+            <div class="typeSelection">
+                <ul class="menu">
+                    <li><div id="type_heading">Direct</div>
+                        <ul class="sub-menu" id="sub-menu_i">
+                        <li id="direct" onclick="changeMsgType('direct')">Direct</li>
+                        <li id="broadcast" onclick="changeMsgType('broadcast')">BroadCast</li>
+                        <li id="multiple" onclick="changeMsgType('multiple')">Mutiple</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
-        <div class="chating">
+        <div class="intro" id="intro_i">
+            <em><h3 style="opacity: 50%; color: rgba(255, 166, 0, 0.822);">Hello</h3></em>
+        </div>
+        <div class="chating" id="chating_i">
             <div class="chats" id="chats_i_type1">
 
             </div>
@@ -78,5 +93,4 @@
     </script>
     <%- include("../script/script") %>
 </body>
-
 </html>
