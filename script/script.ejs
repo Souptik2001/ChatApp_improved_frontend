@@ -4,13 +4,15 @@
     var f_i_type2;
     var f_i_type3;
     var f_i_type4;
-    var contacts_l = [];
+    var contacts_l = {};
     var changingUser = 0;
     var unread = [];
     var receiver;
     var extra_contact = '';
     var endpoint = 'https://api-chatappi.herokuapp.com'; // This will be changed to the api in which we host the app-backend
     const socket = io('https://api-chatappi.herokuapp.com'); // This will be changed to the api in which we host the app-backend
+    // var endpoint = 'http://localhost:3000'; // This will be changed to the api in which we host the app-backend
+    // const socket = io('http://localhost:3000'); // This will be changed to the api in which we host the app-backend
     document.getElementById('direct').remove();
     // Deciding messaging type
 
@@ -78,7 +80,7 @@
     socket.on('searchedUsers', (data)=>{
         document.getElementById('options_i').innerHTML = '';
         for(var i=0; i<data.length; i++){
-            if(!(contacts_l.includes(data[i].username)) && data[i].username!=username && extra_contact!=data[i].username){
+            if(contacts_l[data[i].username]==undefined && data[i].username!=username && extra_contact!=data[i].username){
                 document.getElementById('options_i').innerHTML += `<p style="color: black; padding-top: 5px;padding-bottom: 5px; width:80%; border-radius: 8px;margin: 0; border-bottom: solid 1px rgb(0, 0, 0);" onClick="setUser('${data[i].username}')" class="eachSearchUser"><strong>${data[i].username}</strong></p>`;
             }
         }
@@ -113,7 +115,12 @@
     }
     username = prompt("What is your username ?");
     document.getElementById('logout_i').innerText = `Logout ${username}`;
+    // This is temporary for checking that user does login into the available logins (this is until login system is not available)
+    var tempAllUsers = ["user1", "user2","user3","user4","user5","user6","user7","user8","user9","user10","user11", "user12","user13"];
     if(username == undefined || username == ''){
+        location.reload();
+    }
+    if(!(tempAllUsers.includes(username))){
         location.reload();
     }
     socket.on('getUserid', ()=>{
@@ -122,35 +129,32 @@
     socket.on('showOnline', (data)=>{
         console.log(data);
     });
+    // For populating the message in the client(subscriber side) side
     function populateMsg(data){
-        // THis is for the receiver side
-        if(data.sender!=username){
+        // If the user is currently not in the sender's tab
             if(data.sender!=receiver){
-                if(contacts_l.includes(data.sender)){
-                    if(receiver!=-1){
-                        document.getElementById(`unread_count_${data.sender}`).style.display = '';
-                        document.getElementById(`unread_count_${data.sender}`).innerText = 1 + Number(document.getElementById(`unread_count_${data.sender}`).innerText);
-                    }
-                }else{
-                    //Emit another event to update the contacts table
+                // If the sender is not in contact of the receiver then -
+                if(contacts_l[data.sender]==undefined){
+                    // Update the local contacts list
+                    contacts_l[data.sender] = true;
+                    // Update the database contact table of relation "subscriber"->"publisher"
                     socket.emit('addNewContact', {
-                        user1: data.sender,
-                        user2: username
+                        user: username,
+                        subs: contacts_l
                     });
-                    if(extra_contact==data.sender){
-                        extra_contact = '';
-                    }
-                    if(document.getElementById(data.sender)==undefined && receiver!=-1){
+                    // If we are not in broadcast tab then create a new tab for the new publisher
+                    if(receiver!=-1){
                         document.getElementById('contacts_i').innerHTML += `<div class="contact" id=${data.sender} onclick="changeReceiver('${data.sender}')"><div id="uname_${data.sender}">${data.sender}</div><div class="unread_num" id="unread_count_${data.sender}"></div></div><div style="height: 1px; background-color: #EAEFF5"></div>`;
                         document.getElementById(`unread_count_${data.sender}`).style.display = 'none';
                     }
-                    contacts_l.push(data.sender);
-                    if(receiver!=-1){
-                        document.getElementById(`unread_count_${data.sender}`).style.display = '';
-                    document.getElementById(`unread_count_${data.sender}`).innerText = 1 + Number(document.getElementById(`unread_count_${data.sender}`).innerText);
-                    }
                 }
-                if(data.receiver==-1){////////////
+                // If we are not in broadcast tab then change the unread number
+                if(receiver!=-1){
+                    document.getElementById(`unread_count_${data.sender}`).style.display = '';
+                    document.getElementById(`unread_count_${data.sender}`).innerText = 1 + Number(document.getElementById(`unread_count_${data.sender}`).innerText);
+                }
+                // Adding to the unread table
+                if(data.receiver==-1){
                     socket.emit('addToUnread', {
                         user: data.sender,
                         receiver: username
@@ -162,52 +166,25 @@
                     });
                 }
             }else{
-                if(!(contacts_l.includes(data.receiver)) && extra_contact!=''){
+                // To handle the case if the receiver is in a new contacts tab and that new contacts suddenly messages
+                if(contacts_l[data.sender]==undefined && extra_contact!=''){
+                    contacts_l[data.sender]=true;
                     socket.emit('addNewContact', {
-                        user1: data.sender,
-                        user2: data.receiver
+                        user: username,
+                        subs: contacts_l
                     });
-                    contacts_l.push(data.receiver);
                     extra_contact='';
                     console.log(`extra_contact - ${extra_contact}`);
                 }
                 console.log(data);
-                if(receiver==data.sender){
-                    if (data.sender == username) {
-                    document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="you chat">${data.txt}<div>`;
-                    } else {
-                        console.log(`chats_i_${data.msg_type}`);
-                        document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="other chat">${data.txt}<div>`;
-                    }
-                    document.getElementById(`chats_i_${data.msg_type}`).scrollTo(0, document.getElementById(`chats_i_${data.msg_type}`).scrollHeight);
-                }
-            }
-            //This is for the sender  side
-        }else{//////////////////
-            if(data.receiver==-1){
-                document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="you chat">${data.txt}<div>`;
-            }else{
-                if(!(contacts_l.includes(data.receiver))){
-                    contacts_l.push(data.receiver);
-                    extra_contact='';
-                    console.log(`extra_contact - ${extra_contact}`);
-                }
-                if(data.receiver==receiver){
-                    if (data.sender == username) {
-                            document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="you chat">${data.txt}<div>`;
-                        } else {
-                            console.log(`chats_i_${data.msg_type}`);
-                            document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="other chat">${data.txt}<div>`;
-                        }
-                    document.getElementById(`chats_i_${data.msg_type}`).scrollTo(0, document.getElementById(`chats_i_${data.msg_type}`).scrollHeight);
-                }
+                document.getElementById(`chats_i_${data.msg_type}`).innerHTML += `<div class="other chat">${data.txt}<div>`;
+                document.getElementById(`chats_i_${data.msg_type}`).scrollTo(0, document.getElementById(`chats_i_${data.msg_type}`).scrollHeight);
             }
         }
-    }
+    
     socket.on('populateMsg', (message)=>{
         var data = JSON.parse(message);
         populateMsg(data);
-        // console.log(JSON.parse(message));
     })
     // For initial loading of messages
     function getData() {
@@ -217,50 +194,7 @@
             items:1000
         });
     }
-    // // For lazy loading messages
-    // function loadData() {
-    //     return new Promise((resolve, reject) => {
-    //         HTTP = new XMLHttpRequest();
-    //         HTTP.onreadystatechange = function() {
-    //             if (HTTP.readyState == XMLHttpRequest.DONE) {
-    //                 resolve((JSON.parse(HTTP.responseText)));
-    //             }
-    //         }
-    //         HTTP.open("GET", endpoint + `/loadData?sender=${username}&receiver=${receiver}&items=20&index=${f_i}`, true);
-    //         HTTP.send();
-    //     });
-    // }
-    // var observer = new IntersectionObserver((entries, observer) => {
-    //     var entry = entries[entries.length - 1];
-    //     if (entry.isIntersecting) {
-    //         loadingPrev = 1;
-    //         observer.unobserve(document.getElementById('topmost'));
-    //         loadData().then((msgs) => {
-    //             if (msgs.length > 0) {
-    //                 f_i = msgs[0].id;
-    //                 for (var i = msgs.length - 1; i >= 0; i--) {
-    //                     document.getElementById('topmost').setAttribute("id", "prevtop");
-    //                     var newMsg = document.createElement("div");
-    //                     var node = document.createTextNode(msgs[i].txt);
-    //                     newMsg.appendChild(node);
-    //                     newMsg.setAttribute("id", "topmost");
-    //                     if (msgs[i].sender == username) {
-    //                         newMsg.setAttribute("class", "you chat");
-    //                     } else {
-    //                         newMsg.setAttribute("class", "other chat");
-    //                     }
-    //                     chatBox.insertBefore(newMsg, document.getElementById('prevtop'));
-    //                     document.getElementById('prevtop').removeAttribute("id");
-    //                 }
-    //                 observer.observe(document.getElementById('topmost'));
-    //                 loadingPrev = 0;
-    //             }
-    //         });
-
-    //     }
-
-    // });
-
+    // API call to get the contacts of an user
     function getContacts() {
         return new Promise(async(resolve, reject) => {
             var HTTP = new XMLHttpRequest();
@@ -274,59 +208,75 @@
             await HTTP.send();
         });
     }
+    // Send by server sending the unread messages for the user
     socket.on('checked-unread-cache', (data)=>{
-        if(document.getElementById(`unread_count_${data.sender}`).innerText==''){
-            document.getElementById(`unread_count_${data.sender}`).innerText = data.number;
-        }else{
-            document.getElementById(`unread_count_${data.sender}`).innerText = Number(document.getElementById(`unread_count_${data.sender}`).innerText) + Number(data.number);
-        }
-        document.getElementById(`unread_count_${data.sender}`).style.display = '';
-    });
-    socket.on('checked-unread', (data)=>{
-        if(data.length!=0){
-            if(document.getElementById(`unread_count_${data[0].username}`).innerText==''){
-                document.getElementById(`unread_count_${data[0].username}`).innerText = data[0].number;
+        console.log(data);
+        for (const [key, value] of Object.entries(data)) {
+            // Update local and database contact
+            if(contacts_l[key]==undefined){
+                contacts_l[key] = true;
+                socket.emit('addNewContact', {
+                    user: username,
+                    subs: contacts_l
+                });
+                // Add tab of the new contact
+                document.getElementById('contacts_i').innerHTML += `<div class="contact" id=${key} onclick="changeReceiver('${key}')"><div id="uname_${key}">${key}</div><div class="unread_num" id="unread_count_${key}"></div></div><div id="seperator_${key}" style="height: 1px; background-color: #EAEFF5"></div>`;
+                document.getElementById(`unread_count_${key}`).style.display = 'none';
+            }
+            // Adding the unread count
+            if(document.getElementById(`unread_count_${key}`).innerText==''){
+                document.getElementById(`unread_count_${key}`).innerText = value;
             }else{
-                document.getElementById(`unread_count_${data[0].username}`).innerText = Number(document.getElementById(`unread_count_${data[0].username}`).innerText) + Number(data[0].number);
+                document.getElementById(`unread_count_${key}`).innerText = Number(document.getElementById(`unread_count_${key}`).innerText) + Number(value);
             }
-            document.getElementById(`unread_count_${data[0].username}`).style.display = '';
+            document.getElementById(`unread_count_${key}`).style.display = '';
         }
     });
-    // //Starting point of the app
+    // Send by server sending the unread messages for the user
+    socket.on('checked-unread', (data)=>{
+        console.log(data);
+        // If unread found
+        for(var i = 0; i< data.length; i++){
+            // Update local and database contact
+            if(contacts_l[data[i].username]==undefined){
+                console.log(data);
+                contacts_l[data[i].username] = true;
+                socket.emit('addNewContact', {
+                    user: username,
+                    subs: contacts_l
+                });
+                // Add tab of the new contact
+                document.getElementById('contacts_i').innerHTML += `<div class="contact" id=${data[i].username} onclick="changeReceiver('${data[i].username}')"><div id="uname_${data[i].username}">${data[i].username}</div><div class="unread_num" id="unread_count_${data[i].username}"></div></div><div id="seperator_${data[i].username}" style="height: 1px; background-color: #EAEFF5"></div>`;
+                document.getElementById(`unread_count_${data[i].username}`).style.display = 'none';
+            }
+            // Adding the unread count
+            if(document.getElementById(`unread_count_${data[i].username}`).innerText==''){
+                document.getElementById(`unread_count_${data[i].username}`).innerText = data[i].number;
+            }else{
+                document.getElementById(`unread_count_${data[i].username}`).innerText = Number(document.getElementById(`unread_count_${data[i].username}`).innerText) + Number(data[i].number);
+            }
+            document.getElementById(`unread_count_${data[i].username}`).style.display = '';
+        }
+    });
+    //Starting point of the app here it loads the contacts of the user
     function populateContacts(){
-        contacts_l = [];
         getContacts().then(async(contacts) => {
-        for (var i = 0; i < contacts.length; i++) {
-            if (contacts[i].user1 == username) {
-                socket.emit('checkUnread', {
-                    user:contacts[i].user2,
-                    receiver:contacts[i].user1
-                });
-                document.getElementById('contacts_i').innerHTML += `<div class="contact" id=${contacts[i].user2} onclick="changeReceiver('${contacts[i].user2}')"><div id="uname_${contacts[i].user2}">${contacts[i].user2}</div><div class="unread_num" id="unread_count_${contacts[i].user2}"></div></div><div id="seperator_${contacts[i].user2}" style="height: 1px; background-color: #EAEFF5"></div>`;
-                document.getElementById(`unread_count_${contacts[i].user2}`).style.display = 'none';
-                contacts_l.push(contacts[i].user2);
-                socket.emit('checkUnreadCache', {
-                    user:contacts[i].user2,
-                    receiver:contacts[i].user1
-                });
-            } else {
-                socket.emit('checkUnread', {
-                    user:contacts[i].user1,
-                    receiver:contacts[i].user2
-                });
-                document.getElementById('contacts_i').innerHTML += `<div class="contact" id=${contacts[i].user1} onclick="changeReceiver('${contacts[i].user1}')"><div id="uname_${contacts[i].user1}">${contacts[i].user1}</div><div class="unread_num" id="unread_count_${contacts[i].user1}"></div></div><div id="seperator_${contacts[i].user1}" style="height: 1px; background-color: #EAEFF5"></div>`;
-                document.getElementById(`unread_count_${contacts[i].user1}`).style.display = 'none'
-                contacts_l.push(contacts[i].user1);
-                socket.emit('checkUnreadCache', {
-                    user:contacts[i].user1,
-                    receiver:contacts[i].user2
-                });
+            contacts_l = JSON.parse(contacts[0].subs);
+            console.log(contacts_l);
+            for (const [key, value] of Object.entries(contacts_l)) {
+                // Add the tabs
+                document.getElementById('contacts_i').innerHTML += `<div class="contact" id=${key} onclick="changeReceiver('${key}')"><div id="uname_${key}">${key}</div><div class="unread_num" id="unread_count_${key}"></div></div><div id="seperator_${key}" style="height: 1px; background-color: #EAEFF5"></div>`;
+                document.getElementById(`unread_count_${key}`).style.display = 'none';
             }
-        }
-    });
+            // Check any unread for every contact
+            socket.emit('checkUnread', username);
+            // Check for any broadcast unread message
+            socket.emit('checkUnreadCache', username);
+        });
     }
     populateContacts();
 
+    // This function is called when user selects anotther user's(contact's) tab
     function changeReceiver(user) {
         document.getElementById('intro_i').style.display='none';
         document.getElementById('chating_i').style.display = 'flex';
@@ -339,7 +289,7 @@
             socket.emit('deleteFromUnreadCache', {
                 user: user,
                 receiver: username
-            })
+            });
             document.getElementById(`unread_count_${user}`).innerText='';
             document.getElementById(`unread_count_${user}`).style.display='none';
         }
@@ -356,6 +306,7 @@
         document.getElementById(`uname_${receiver}`).innerHTML = `<strong>${document.getElementById(receiver).innerText}  >></strong>`
         getData();
     }
+    // This event is send by the server in which the server sends the chats of an user
     socket.on('sendingInitialChats', msgs => {
             f_i_type1=0; f_i_type2=0; f_i_type3=0; f_i_type4=0;
             document.getElementById('chats_i_type1').innerHTML='';document.getElementById('chats_i_type2').innerHTML='';document.getElementById('chats_i_type3').innerHTML='';document.getElementById('chats_i_type4').innerHTML='';
@@ -390,35 +341,39 @@
                 // observer.observe(document.getElementById('topmost'));
             }
             changingUser = 0;
-        })
-    // function logout() {
-    //     document.cookie = "authorization=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
-    //     location.reload();
-    // }
+        });
+    // This function is called when the logout button is clicked
+    function logout() {
+        // document.cookie = "authorization=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+        location.reload();
+    }
+    // This function is called when the send button is pressed
     async function pushData(msg_type) {
         if (receiver != undefined) {
                 if (document.getElementById(`msg_${msg_type}`).value != "") {
-                    if(!(contacts_l.includes(receiver)) && receiver!=-1){
-                        contacts_l.push(receiver);
+                    var payload = {
+                        txt : document.getElementById(`msg_${msg_type}`).value,
+                        msg_type : msg_type,
+                        date : "Sometime",
+                        sender : username,
+                        receiver : receiver
+                    };
+                    if(contacts_l[receiver]==undefined && receiver!=-1){ // This is to check if the publisher is in contact with the subscriber
+                        contacts_l[receiver] = true;
                         extra_contact='';
+                        // Ading the new subs object
+                        payload.subs=contacts_l;
+                        // Adding this to check in the server whether contact is to be added or not
+                        payload.newConnection = 1;
                         console.log(contacts_l);
                     }
-                    socket.emit('sendMessageClient_sender', {
-                        txt : document.getElementById(`msg_${msg_type}`).value,
-                        msg_type : msg_type,
-                        date : "Sometime",
-                        sender : username,
-                        receiver : receiver
-                    });
-                    socket.emit('sendMessageClient', JSON.stringify({
-                        txt : document.getElementById(`msg_${msg_type}`).value,
-                        msg_type : msg_type,
-                        date : "Sometime",
-                        sender : username,
-                        receiver : receiver
-                    }));
-                    document.getElementById(`msg_${msg_type}`).value = "";
+                    // Displaying the chat in the sender side
+                    document.getElementById(`chats_i_${msg_type}`).innerHTML += `<div class="you chat">${document.getElementById(`msg_${msg_type}`).value}<div>`;
                     document.getElementById(`chats_i_${msg_type}`).scrollTo(0, document.getElementById(`chats_i_${msg_type}`).scrollHeight);
+                    // socket.emit('sendMessageClient_sender', payload);
+                    // Sending the message to the server for adding it to the database and send it to the receiver(if online) else sstoring in the unread table
+                    socket.emit('sendMessageClient', JSON.stringify(payload));
+                    document.getElementById(`msg_${msg_type}`).value = "";
                 }
         }
         document.getElementById(`msg_${msg_type}`).value = "";
