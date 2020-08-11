@@ -9,10 +9,10 @@
     var unread = [];
     var receiver;
     var extra_contact = '';
-    var endpoint = 'https://api-chatappi.herokuapp.com'; // This will be changed to the api in which we host the app-backend
-    const socket = io('https://api-chatappi.herokuapp.com'); // This will be changed to the api in which we host the app-backend
-    // var endpoint = 'http://localhost:3000'; // This will be changed to the api in which we host the app-backend
-    // const socket = io('http://localhost:3000'); // This will be changed to the api in which we host the app-backend
+    // var endpoint = 'https://api-chatappi.herokuapp.com'; // This will be changed to the api in which we host the app-backend
+    // const socket = io('https://api-chatappi.herokuapp.com'); // This will be changed to the api in which we host the app-backend
+    var endpoint = 'http://localhost:3000'; // This will be changed to the api in which we host the app-backend
+    const socket = io('http://localhost:3000'); // This will be changed to the api in which we host the app-backend
     document.getElementById('direct').remove();
     // Deciding messaging type
 
@@ -68,6 +68,7 @@
             
         }
     }
+    // When the server sends the broadcast messages send by a user it is used to populate them in the chat box
     socket.on('sendingBroadcastMessages', (data)=>{
         console.log(data);
         if(receiver==-1){
@@ -85,6 +86,7 @@
             }
         }
     });
+    // When a new user is selected from the chatbo
     function setUser(user){
         document.getElementById('user_s_i').value= '';
         document.getElementById('options_i').innerHTML='';
@@ -113,6 +115,7 @@
         }
         return random_string;
     }
+    // Collecting the username
     username = prompt("What is your username ?");
     document.getElementById('logout_i').innerText = `Logout ${username}`;
     // This is temporary for checking that user does login into the available logins (this is until login system is not available)
@@ -122,10 +125,13 @@
     }
     if(!(tempAllUsers.includes(username))){
         location.reload();
-    }
-    socket.on('getUserid', ()=>{
+    // Sending the username to the server
+    }else{
         socket.emit('noteUserid', username);
-    })
+    }
+    // socket.on('getUserid', ()=>{
+    //     socket.emit('noteUserid', username);
+    // })
     socket.on('showOnline', (data)=>{
         console.log(data);
     });
