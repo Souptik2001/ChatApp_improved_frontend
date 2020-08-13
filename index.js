@@ -106,7 +106,6 @@ app.get('/login', (req, res)=>{
 function checkCred(cred_user, cred_pass) {
     return new Promise(async(resolve, reject) => {
         // var endpoint = '';
-        var proxy = 'http://localhost:3000';
         if (cred_pass != "" && cred_user!= "") {
             fetch(proxy + `/login`, {
                 method: 'POST',
