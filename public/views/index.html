@@ -9,7 +9,7 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <title>Some ChatApp</title>
-    <%- include('../css/style') %>
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 
 <body>
@@ -20,7 +20,7 @@
         <a class="navbar-brand" href="#">
             <!-- <img src="/docs/4.5/assets/brand/bootstrap-solid.svg" width="30" height="30" class="d-inline-block align-top" alt="logo" loading="lazy"> -->Some ChatApp
         </a>
-        <button class="btn btn-outline-success my-2 my-sm-0" id="logout_i" style="color: white; background-color: rgb(3, 148, 23);" onclick="logout()">Logout <%= data.user %></button>
+        <button class="btn btn-outline-success my-2 my-sm-0" id="logout_i" style="color: white; background-color: rgb(3, 148, 23);" onclick="logout()">Logout</button>
     </nav>
     <!-- Nav -->
     <div class="mainBody">
@@ -88,10 +88,6 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
     <script src="https://api-chatappi.herokuapp.com/socket.io/socket.io.js"></script> <!-- This also is to be changed -->
     <!-- <script src="http://localhost:3000/socket.io/socket.io.js"></script> This also is to be changed -->
-    <script>
-        var username = '<%= data.user %>'
-        console.log('<%= data.user %>');
-    </script>
-    <%- include("../script/script") %>
+    <script src="./script/script.js"></script>
 </body>
 </html>

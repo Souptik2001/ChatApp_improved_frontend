@@ -1,4 +1,3 @@
-<script>
     var messaging_type = 'direct';
     var f_i_type1;
     var f_i_type2;
@@ -14,8 +13,30 @@
     // var endpoint = 'http://localhost:3000'; // This will be changed to the api in which we host the app-backend
     // const socket = io('http://localhost:3000'); // This will be changed to the api in which we host the app-backend
     document.getElementById('direct').remove();
-    // Deciding messaging type
 
+    // Collecting the username from cookie
+    var username;
+    var cookies_s = decodeURIComponent(document.cookie);
+    if (cookies_s != undefined) {
+        var cookies = cookies_s.split("; ");
+        for (var i = 0; i < cookies.length; i++) {
+            if(cookies[i].indexOf("name=") == 0){
+                username = cookies[i].substring("name=".length, cookies[i].length);
+            }
+        }
+    }
+    document.getElementById('logout_i').innerText = `Logout ${username}`;
+    if(username == undefined || username == ''){
+        location.reload();
+    }else{
+        socket.emit('noteUserid', username);
+    }
+    socket.on('showOnline', (data)=>{
+        console.log(data);
+    });
+
+
+    // Deciding messaging type
     function changeMsgType(messagingType){
         for(var i=1; i<5; i++){
             document.getElementById(`chats_i_type${i}`).innerHTML = '';
@@ -104,37 +125,6 @@
             }
         }
     }
-    // this is temporary
-    function generateRandomString(length) {
-        var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        var random_string = '';
-        if (length > 0) {
-            for (var i = 0; i < length; i++) {
-                random_string += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-        }
-        return random_string;
-    }
-    // Collecting the username
-    username = prompt("What is your username ?");
-    document.getElementById('logout_i').innerText = `Logout ${username}`;
-    // This is temporary for checking that user does login into the available logins (this is until login system is not available)
-    var tempAllUsers = ["user1", "user2","user3","user4","user5","user6","user7","user8","user9","user10","user11", "user12","user13"];
-    if(username == undefined || username == ''){
-        location.reload();
-    }
-    if(!(tempAllUsers.includes(username))){
-        location.reload();
-    // Sending the username to the server
-    }else{
-        socket.emit('noteUserid', username);
-    }
-    // socket.on('getUserid', ()=>{
-    //     socket.emit('noteUserid', username);
-    // })
-    socket.on('showOnline', (data)=>{
-        console.log(data);
-    });
     // For populating the message in the client(subscriber side) side
     function populateMsg(data){
         // If the user is currently not in the sender's tab
@@ -350,7 +340,7 @@
         });
     // This function is called when the logout button is clicked
     function logout() {
-        // document.cookie = "authorization=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+        document.cookie = "authorization=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
         location.reload();
     }
     // This function is called when the send button is pressed
@@ -388,4 +378,3 @@
     socket.on('multipleLoginError', ()=>{
         document.body.innerHTML = "Sorry You have logged in another tab";
     });
-</script>
